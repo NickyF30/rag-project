@@ -28,6 +28,10 @@ export async function storeDocument(req: Request) {
             addVideoInfo: true,
         })
 
+        const docs = await loader.load();
+
+        console.log(docs);
+
 
 
     } catch (error) {
