@@ -32,12 +32,14 @@ export async function storeDocument(req: Request) {
 
         console.log(docs);
 
-
-
     } catch (error) {
         console.error(error);
-        return { ok: false };
+        return { 
+            ok: false 
+        }
     }
 
-    return { ok: true };
+    return { 
+        ok: true 
+    };
 }
