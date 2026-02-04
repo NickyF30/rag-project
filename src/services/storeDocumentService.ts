@@ -3,6 +3,7 @@ import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { createSupabaseClient } from '../helpers/supabaseClientHelpers';
 import { YoutubeLoader } from "@langchain/community/document_loaders/web/youtube";
 import { SupabaseVectorStore } from "@langchain/community/vectorstores/supabase"
+import 'dotenv/config';
 
 export async function storeDocument(req: Request) {
     try {
@@ -34,12 +35,8 @@ export async function storeDocument(req: Request) {
 
     } catch (error) {
         console.error(error);
-        return { 
-            ok: false 
-        }
+        return { ok: false };
     }
 
-    return { 
-        ok: true 
-    };
+    return { ok: true };
 }
