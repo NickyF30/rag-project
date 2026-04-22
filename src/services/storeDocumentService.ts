@@ -6,7 +6,6 @@ import { SupabaseVectorStore } from "@langchain/community/vectorstores/supabase"
 
 export async function storeDocument(req: Request) {
     try {
-        const { url } = req.body
         // Init supabase client
         const supabase = createSupabaseClient();
 
@@ -24,7 +23,7 @@ export async function storeDocument(req: Request) {
         })
 
         // Load document from youtube video
-        const loader = YoutubeLoader.createFromUrl(url, {
+        const loader = YoutubeLoader.createFromUrl("https://www.youtube.com/watch?v=5MuIMqhT8DM", {
             addVideoInfo: true,
         })
 
