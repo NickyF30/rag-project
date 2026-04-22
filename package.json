@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "dev": "nodemon src/index.ts"
-  },
+  "dev": "nodemon --exec ts-node src/index.ts"
+},
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@langchain/community": "^1.1.10",
@@ -25,4 +25,5 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }
+  
 }

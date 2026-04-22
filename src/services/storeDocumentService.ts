@@ -1,9 +1,10 @@
 import { Request } from 'express';
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { createSupabaseClient } from '../helpers/supabaseClientHelpers';
-import { YoutubeLoader } from "@langchain/community/document_loaders/web/youtube";
 import { SupabaseVectorStore } from "@langchain/community/vectorstores/supabase";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { YoutubeTranscript } from 'youtube-transcript';
+import { Document } from "@langchain/core/documents";
 import 'dotenv/config';
 
 export async function storeDocument(req: Request) {
@@ -27,27 +28,31 @@ export async function storeDocument(req: Request) {
             queryName: 'match_documents',
         });
 
-        // Load transcript from YouTube video
-        const loader = YoutubeLoader.createFromUrl(url, {
-            addVideoInfo: true,
-        });
+        const transcriptItems = await YoutubeTranscript.fetchTranscript(url);
+        console.log('Transcript items:', transcriptItems.length);
+        console.log('Sample:', transcriptItems.slice(0, 2));
 
-        const docs = await loader.load();
+        const fullText = transcriptItems.map(t => t.text).join(' ');
+        console.log('Full text length:', fullText.length);
 
-        // Split transcript into smaller chunks so embeddings are more precise
+        const docs = [new Document({
+            pageContent: fullText,
+            metadata: { source: url },
+        })];
+
         const splitter = new RecursiveCharacterTextSplitter({
             chunkSize: 1000,
             chunkOverlap: 200,
         });
 
         const splitDocs = await splitter.splitDocuments(docs);
+        const finalDocs = splitDocs.length > 0 ? splitDocs : docs;
 
-        console.log(`Storing ${splitDocs.length} chunks from: ${url}`);
+        console.log(`Storing ${finalDocs.length} chunks from: ${url}`);
 
-        // Store embeddings in Supabase — this was missing before!
-        await vectorStore.addDocuments(splitDocs);
+        await vectorStore.addDocuments(finalDocs);
 
-        return { ok: true, chunksStored: splitDocs.length };
+        return { ok: true, chunksStored: finalDocs.length };
 
     } catch (error) {
         console.error(error);
