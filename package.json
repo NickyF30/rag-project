@@ -7,6 +7,7 @@
     "@langchain/community": "^1.1.10",
     "@langchain/core": "^1.1.18",
     "@langchain/google-genai": "^2.1.14",
+    "@langchain/textsplitters": "^1.0.1",
     "@supabase/supabase-js": "^2.94.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

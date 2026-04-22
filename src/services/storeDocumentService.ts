@@ -2,40 +2,55 @@ import { Request } from 'express';
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { createSupabaseClient } from '../helpers/supabaseClientHelpers';
 import { YoutubeLoader } from "@langchain/community/document_loaders/web/youtube";
-import { SupabaseVectorStore } from "@langchain/community/vectorstores/supabase"
+import { SupabaseVectorStore } from "@langchain/community/vectorstores/supabase";
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import 'dotenv/config';
 
 export async function storeDocument(req: Request) {
     try {
-        // Init supabase client
+        const { url } = req.body;
+
+        if (!url) {
+            return { ok: false, error: 'Missing YouTube URL in request body' };
+        }
+
         const supabase = createSupabaseClient();
 
-        // 1. Initialize the Gemini embeddings
         const embeddings = new GoogleGenerativeAIEmbeddings({
             apiKey: process.env.GEMINI_API_KEY,
-            model: "text-embedding-004", 
-        })
+            model: "text-embedding-004",
+        });
 
-        // Initialize vector store
         const vectorStore = new SupabaseVectorStore(embeddings, {
             client: supabase,
             tableName: 'embedded_documents',
-            queryName: 'match_documents'
-        })
+            queryName: 'match_documents',
+        });
 
-        // Load document from youtube video
-        const loader = YoutubeLoader.createFromUrl("https://www.youtube.com/watch?v=5MuIMqhT8DM", {
+        // Load transcript from YouTube video
+        const loader = YoutubeLoader.createFromUrl(url, {
             addVideoInfo: true,
-        })
+        });
 
         const docs = await loader.load();
 
-        console.log(docs);
+        // Split transcript into smaller chunks so embeddings are more precise
+        const splitter = new RecursiveCharacterTextSplitter({
+            chunkSize: 1000,
+            chunkOverlap: 200,
+        });
+
+        const splitDocs = await splitter.splitDocuments(docs);
+
+        console.log(`Storing ${splitDocs.length} chunks from: ${url}`);
+
+        // Store embeddings in Supabase — this was missing before!
+        await vectorStore.addDocuments(splitDocs);
+
+        return { ok: true, chunksStored: splitDocs.length };
 
     } catch (error) {
         console.error(error);
-        return { ok: false };
+        return { ok: false, error: String(error) };
     }
-
-    return { ok: true };
 }
